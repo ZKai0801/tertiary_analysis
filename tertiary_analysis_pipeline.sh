@@ -42,7 +42,7 @@ table_annovar.pl ${input_vcf%%.vcf*}.step3_merged.vcf ${annovar_dir} \
 vep --dir ${vep_dir} --cache --offline --cache_version 98 \
 --use_given_ref --refseq --assembly GRCh37  \
 --fa ${reference} --force_overwrite --vcf --variant_class --gene_phenotype --vcf_info_field ANN \
---hgvs --hgvsg --transcript_version \
+--hgvs --hgvsg --transcript_version --format vcf \
 -i ${input_vcf%%.vcf*}.step4_temp.hg19_multianno.vcf -o ${input_vcf%%.vcf*}.step4_anno.vcf
 
 rm ${input_vcf%%.vcf*}.step4_temp.hg19_multianno.vcf ${input_vcf%%.vcf*}.step4_temp.hg19_multianno.txt
