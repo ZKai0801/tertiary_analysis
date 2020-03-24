@@ -3,8 +3,9 @@
 This pipeline involves:
 1. normalisation of vcf file (split multiallelic sites; left-align indels)
 2. remove non-pass variants
-3. annotating rest of variants (including population AF, prediction values from various software, CIVic and etc...)
-4. remove benign & likely benign variants
+3. merge multi-nucleotide variants
+4. annotating rest of variants (including population AF, prediction values from various software, CIVic and etc...)
+5. remove benign & likely benign variants
 
 ## Dependencies
 
