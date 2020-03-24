@@ -9,6 +9,7 @@ It will also re-write vep annotated info (i.e. ANN) to retain only one element.
 """
 __date__ = "2020/01/07"
 __author__ = "Kai"
+__version__ = "v1.2"
 
 
 import pysam
@@ -56,26 +57,29 @@ def parse_vep_anno(vep_records, clinic_transcript, refflat):
     cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|
     DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|REFSEQ_MATCH|GENE_PHENO|HGVS_OFFSET|HGVSg
     """
-    gene_symbol = vep_records[0].split("|")[3]
+    gene_symbols = list(set([i.split("|")[3] for i in vep_records]))
 
     # get the transcript with the most clinical impacts
-    if gene_symbol in clinic_transcript:
-        transcript = clinic_transcript[gene_symbol][0].split(".")[0]
-        for each_vep in vep_records:
-            if transcript in each_vep:
-                if each_vep.split("|")[8]:
-                    cds = "exon" + each_vep.split("|")[8].split("/")[0]
-                else:
-                    cds = "intron" + each_vep.split("|")[9].split("/")[0]
-                return (gene_symbol, each_vep.split("|")[6], cds, 
-                        each_vep.split("|")[10], each_vep.split("|")[11])
+    for each_gene in gene_symbols:
+        if each_gene in clinic_transcript:
+            transcript = clinic_transcript[each_gene][0].split(".")[0]
+            for each_vep in vep_records:
+                if transcript in each_vep:
+                    if each_vep.split("|")[8]:
+                        cds = "exon" + each_vep.split("|")[8].split("/")[0]
+                    else:
+                        cds = "intron" + each_vep.split("|")[9].split("/")[0]
+                    return (each_gene, each_vep.split("|")[6], cds, 
+                            each_vep.split("|")[10], each_vep.split("|")[11])
+        else:
+            continue
     
     if len(vep_records) == 1:
         if vep_records[0].split("|")[8]:
             cds = "exon" + vep_records[0].split("|")[8].split("/")[0]
         else:
             cds = "intron" + vep_records[0].split("|")[9].split("/")[0]
-        return (gene_symbol, vep_records[0].split("|")[6], cds, 
+        return (gene_symbols[0], vep_records[0].split("|")[6], cds, 
                 vep_records[0].split("|")[10], vep_records[0].split("|")[11])
 
     # get the longest transcript
@@ -86,7 +90,7 @@ def parse_vep_anno(vep_records, clinic_transcript, refflat):
         cds = "exon" + vep_record.split("|")[8].split("/")[0]
     else:
         cds = "intron" + vep_record.split("|")[9].split("/")[0]
-    return (gene_symbol, vep_record.split("|")[6], cds, 
+    return (vep_record.split("|")[3], vep_record.split("|")[6], cds, 
             vep_record.split("|")[10], vep_record.split("|")[11])
 
 
