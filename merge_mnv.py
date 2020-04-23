@@ -1,8 +1,7 @@
 __doc__ = """
 merge variants belonging to a same phasing group
 
-GATK can give a PID (physical phasing ID) to each unique variant.
-Variants with the same PID can be merged into one complex variant
+Variants with the same PID & PGT can be merged into one complex variant
 
 ***
 The input VCF file should be sorted and splitted (on multiallelic sites) in advance
@@ -12,6 +11,10 @@ update:
 add max_distance parameter to limit the maximal distance for joining two 
 variants together.
 
+---
+update:
+use PGT in combination with PID to infer in-cis variants
+
 Usage:
 [kai@admin]$ python3 merge_complex_variant.py [input_vcf] [reference] --max_distance [int]
 
@@ -20,8 +23,8 @@ Currently only support for vcf file with one sample only
 
 """
 __author__ = "Kai"
-__version__ = "v1.1"
-__date__ = "05/12/2019"
+__version__ = "v2.0"
+__date__ = "04/23/2020"
 
 
 import pysam
@@ -42,13 +45,14 @@ def main(vcf_file, ofname, reference, max_distance):
             if 'PID' not in record.samples[sampleID]:
                 vcfout.write(record)
                 continue
-            if record not in pids[record.samples[sampleID]['PID']]:
+            pid = record.samples[sampleID]['PID'] + '_' + record.samples[sampleID]['PGT']
+            if record not in pids[pid]:
                 vcfout.write(record)
                 continue
             # make sure only one record will be written to outfile
-            counter[record.samples[sampleID]['PID']] += 1
-            if counter[record.samples[sampleID]['PID']] == len(pids[record.samples[sampleID]['PID']]):
-                merged_record = merge_variants(pids[record.samples[sampleID]['PID']], reference)
+            counter[pid] += 1
+            if counter[pid] == len(pids[pid]):
+                merged_record = merge_variants(pids[pid], reference)
                 if merged_record:
                     print("* {}:{}-{} {}->{}".format(merged_record.chrom, merged_record.start, merged_record.stop,
                                                      merged_record.ref, merged_record.alts[0]))
@@ -120,25 +124,30 @@ def merge_variants(variants_list, reference):
 def identify_phasing_groups(vcf_file, max_distance):
     """
     identify variants on the same phasing groups
+    --------
+    update: 2020-04-23
+        should consider PGT as well to make sure variants are in-cis
     """
     pids = defaultdict(list)
     with pysam.VariantFile(vcf_file, "r") as vcf:
         sampleID = vcf.header.samples[0]
         for record in vcf:
             if 'PID' in record.samples[sampleID]:
-                if record.samples[sampleID]['PID'] not in pids:
-                    pids[record.samples[sampleID]['PID']].append(record)
+                # pid = PID + PGT
+                pid = record.samples[sampleID]['PID'] + '_' + record.samples[sampleID]['PGT']
+                if pid not in pids:
+                    pids[pid].append(record)
                 else:
-                    last_variant = pids[record.samples[sampleID]['PID']][-1]
+                    last_variant = pids[pid][-1]
                     if last_variant.stop + max_distance >= record.start:
-                        pids[record.samples[sampleID]['PID']].append(record)
+                        pids[pid].append(record)
     
     # remove phase_group that contain only one variant
     kept_pids = defaultdict(list)
     for phase_group in pids:
         if len(pids[phase_group]) > 1:
             kept_pids[phase_group] = pids[phase_group]
-    print("* {} phasing group(s) have been identified".format(len(kept_pids)))  
+    print("* {} phasing group(s) have been identified".format(len(kept_pids)))
     return kept_pids
 
 
