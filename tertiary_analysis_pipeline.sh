@@ -42,8 +42,8 @@ bcftools norm -m -both -f ${reference} ${input_vcf%%.vcf*}.step3_merged.vcf -o $
 echo "** Step5 annotation starts at `date`"
 table_annovar.pl ${input_vcf%%.vcf*}.step4_normalised.vcf ${annovar_dir} \
 --outfile ${input_vcf%%.vcf*}.step5_temp --buildver hg19  \
---protocol 1000g2015aug_all,esp6500siv2_all,exac03nonpsych,cosmic70,clinvar_20191013,intervar_20180118,dbnsfp35a,avsnp150,dbscsnv11  \
---operation f,f,f,f,f,f,f,f,f  --vcfinput --remove
+--protocol refGene,cytoBand,1000g2015aug_all,esp6500siv2_all,exac03nonpsych,cosmic70,clinvar_20210213,intervar_20180118,dbnsfp35a,avsnp150  \
+--operation g,r,f,f,f,f,f,f,f,f,f  --vcfinput --remove
 
 vep --dir ${vep_dir} --cache --offline --cache_version 98 \
 --use_given_ref --refseq --assembly GRCh37  \
